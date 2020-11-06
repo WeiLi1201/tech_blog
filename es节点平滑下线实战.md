@@ -36,3 +36,39 @@ curl -XPUT 'http://hostname:9200/_cluster/settings' -H 'Content-Type: applicatio
 }'
 ```
 </font>
+
+# 二、剔除要下线的节点
+## 1.执行剔除下线节点
+<font color=#999AAA >命令语句如下：
+```bash
+curl -XPUT http://hostname:9200/_cluster/settings?pretty -H 'Content-Type: application/json' -d '{
+  "transient": {
+    "cluster.routing.allocation.exclude._name": "{node.name}"
+  }
+}'
+```
+语法参考：
+上面代码会触发分片的 Allocation 机制，涉及的参数为 cluster.routing.allocation.exclude.{attribute}，其中 {attribute} 表示节点的匹配方式，支持三种：
+ - _name：匹配 node 名称，多个 node 名称用逗号隔开；
+ - _ip：匹配 node ip 地址，多个地址用逗号隔开；
+ - _host：匹配 node 主机名，多个主机名用逗号隔开；
+
+**name就是elasticsearch.yml配置文件的node-name，建议用IP，多个["10.1.*.*","10.1.*.*"]**
+## 2.等待数据迁移完成，检查迁移状态
+<font color=#999AAA >剔除后会发现分片会逐渐迁移，等待所有分片迁移完成，事实上会比较慢，如果着急的话，可以使用**cerebro** 插件，可在页面点击手动，加快迁移的速度。</font>
+```bash
+# 以下命令,查看节点迁移情况
+curl http://hostname:9200/_nodes/{node.name}/stats/indices?pretty
+  ...
+  "indices" : {
+        "docs" : {
+          "count" : 0,
+          "deleted" : 0
+        },
+        "store" : {
+          "size_in_bytes" : 0
+        },
+  ...
+
+```
+都变为0表示迁移完成
