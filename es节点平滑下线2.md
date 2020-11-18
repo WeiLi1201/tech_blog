@@ -30,6 +30,9 @@ PUT _cluster/settings
     "cluster.routing.allocation.enable": "none"
   }
 }
+
+# 数据同步 刷新
+POST _flush/synced
 ```
 
 ## 3.重启节点
@@ -40,6 +43,14 @@ PUT _cluster/settings
 {
   "persistent": {
     "cluster.routing.allocation.enable": "all"
+  }
+}
+
+# 关闭自动平衡，只在增减ES节点时不自动平衡数据分片,能快速回复green
+_cluster/settings  put 
+{
+  "transient" : {
+    "cluster.routing.rebalance.enable" : "none"
   }
 }
 ```
